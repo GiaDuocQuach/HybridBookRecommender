@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tìm sách</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1>Gia Duoc Quach</h1>
+      <div class="user-area">
+        {% if username %}Xin chào, {{ username }} | <a href="/logout">Logout</a>{% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="filter-sidebar">
+      <h2>Bộ lọc</h2>
+
+      <!-- Thể loại -->
+      <div class="filter-section">
+        <label for="category" class="filter-label">Thể loại</label>
+        <select id="category">
+          <option value="">Tất cả</option>
+          {% for c in categories %}
+            <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Khoảng giá: dùng đúng df['price_range'] -->
+      <div class="filter-section">
+        <div class="filter-label">Khoảng giá</div>
+        {% for p in price_ranges %}
+          <label class="check"><input type="checkbox" name="price_ranges" value="{{ p }}"> {{ p }}</label>
+        {% endfor %}
+      </div>
+
+      <!-- Độ phổ biến: Popular / Unpopular / Trending -->
+      <div class="filter-section">
+        <div class="filter-label">Độ phổ biến</div>
+        <label class="radio"><input type="radio" name="pop_levels" value="" checked> Tất cả</label>
+        {% for p in pop_levels %}
+          <label class="radio"><input type="radio" name="pop_levels" value="{{ p }}"> {{ p }}</label>
+        {% endfor %}
+      </div>
+
+      <!-- Đánh giá: 0-3 và 3-5 -->
+      <div class="filter-section">
+        <div class="filter-label">Đánh giá</div>
+        <label class="radio"><input type="radio" name="rating_bins" value="" checked> Tất cả</label>
+        {% for b in rating_bins %}
+          <label class="radio"><input type="radio" name="rating_bins" value="{{ b }}"> {{ b }}</label>
+        {% endfor %}
+      </div>
+
+      <!-- Từ khóa -->
+      <div class="filter-section" style="position: relative;">
+        <label for="keyword" class="filter-label">Từ khóa</label>
+        <input type="text" id="keyword" placeholder="Nhập từ khóa…" autocomplete="off">
+        <ul id="suggestions" class="suggestions-list"></ul>
+      </div>
+
+      <button id="btn-search" class="btn-primary">Tìm sách</button>
+    </aside>
+
+    <section class="results">
+      <div id="results" class="results-grid">
+        <div class="no-result">Chọn tiêu chí rồi nhấn “Tìm sách”.</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

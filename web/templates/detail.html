@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    /* Bổ sung nhẹ để hiển thị ảnh gọn gàng, không phá vỡ style.css */
+    .book-detail {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 768px) {
+      .book-detail {
+        grid-template-columns: 320px 1fr;
+        align-items: start;
+      }
+    }
+    .book-cover {
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 2/3;
+      object-fit: contain;
+      background: #f8f8f8;
+      border: 1px solid #eee;
+      border-radius: 6px;
+    }
+    .book-info h2 {
+      margin-top: 0;
+    }
+    .btn-buy {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: var(--accent, #27c2a8);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .btn-buy:hover { filter: brightness(0.95); }
+    .meta, .stars, .price, .desc { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1>Gia Duoc Quach</h1>
+      <div class="user-area">
+        {% if username %}Xin chào, {{ username }} | <a href="/logout">Logout</a>{% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="container" style="padding:18px 0;max-width:900px">
+    <p><a href="/">← Trở về kết quả</a></p>
+
+    <div class="book-detail">
+      <div>
+        {% if image_url %}
+          <img src="{{ image_url }}" alt="Bìa sách: {{ title }}" class="book-cover">
+        {% else %}
+          <img src="/static/img/placeholder-book.png" alt="Chưa có ảnh sách" class="book-cover">
+        {% endif %}
+      </div>
+
+      <!-- KHỐI THÔNG TIN -->
+      <div class="book-info">
+        <h2>{{ title }}</h2>
+        <p class="meta">Tác giả: {{ author }} • Thể loại: {{ category }} • {{ popularity_level }}</p>
+        <p class="stars">{{ stars }} ({{ rating }})</p>
+        <p class="price">Giá: {{ price_k|int }}K</p>
+        {% if description %}
+          <p class="desc">{{ description }}</p>
+        {% endif %}
+
+        {% if book_url %}
+          <a class="btn-buy" href="{{ book_url }}" target="_blank" rel="noopener">Mua sách</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
