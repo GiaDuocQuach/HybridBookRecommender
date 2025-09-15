@@ -4,7 +4,7 @@ Dự án gợi ý sách kết hợp **semantic search + lexical + LightGBM reran
 
 ---
 
-## 0) Chuẩn bị môi trường
+## 1) Chuẩn bị môi trường
 
 * **Python**: 3.10+
 * Khuyên dùng **virtualenv** (venv).
@@ -39,7 +39,7 @@ pip install numpy pandas scikit-learn lightgbm matplotlib seaborn \
 
 ---
 
-## 1) Cấu trúc thư mục tối thiểu
+## 2) Cấu trúc thư mục tối thiểu
 
 ```
 project_root/
@@ -61,7 +61,7 @@ project_root/
 
 ---
 
-## 2) Thiết lập biến môi trường (tuỳ chọn nhưng khuyến nghị)
+## 3) Thiết lập biến môi trường (khuyến nghị)
 
 Tạo file `.env` (hoặc export biến trước khi chạy):
 
@@ -82,7 +82,7 @@ EPS_LEX=0.08
 
 ---
 
-## 3) Chuẩn bị dữ liệu
+## 4) Chuẩn bị dữ liệu
 
 Nếu **đã có** `data/books_data_clean.csv` thì bỏ qua bước này.
 
@@ -93,7 +93,7 @@ Nếu **chưa có**:
 
 ---
 
-## 4) Tiền xử lý & chia tập (EDA + split)
+## 5) Tiền xử lý & chia tập (EDA + split)
 
 ```bash
 python eda_runner.py
@@ -107,7 +107,7 @@ Sinh các file:
 
 ---
 
-## 5) Train ranker (LightGBM) + chọn threshold tối ưu
+## 6) Train ranker (LightGBM) + chọn threshold tối ưu
 
 ```bash
 python train_ranker.py
@@ -121,7 +121,7 @@ Kết quả:
 
 ---
 
-## 6) (Tuỳ chọn) Đánh giá xếp hạng
+## 7) (Tuỳ chọn) Đánh giá xếp hạng
 
 ```bash
 python eval_ranking.py
@@ -133,7 +133,7 @@ Sinh `reports/ranking_metrics_by_category.csv` với NDCG/Recall/HitRate/MRR the
 
 ---
 
-## 7) Chạy web app
+## 8) Chạy web app
 
 ```bash
 python app.py
@@ -149,21 +149,3 @@ python app.py
 * `POST /click`     – ghi lại click vào SQLite.
 * `GET  /book/<id>` – trang chi tiết (có nút Mua sách).
 * `GET|POST /login`, `GET /logout`.
-
----
-
-## 8) Troubleshooting nhanh
-
-* **`ModuleNotFoundError: torch`** khi cài `sentence-transformers`:
-  `pip install torch --index-url https://download.pytorch.org/whl/cpu`
-  (hoặc dùng bản phù hợp GPU nếu có CUDA).
-* **Port 8080 đang bận**: chỉnh `app.run(..., port=5000)` trong `app.py`.
-* **Không thấy CSS/JS**: kiểm tra đúng thư mục `web/static` và `web/templates` hoặc chỉnh `template_folder`, `static_folder` trong `Flask(...)`.
-* **Lỗi SQLite khi ghi**: chắc chắn đường dẫn `INTERACTIONS_DB` *ghi được* (ví dụ đặt ngay cạnh `app.py`).
-
----
-
-## 9) Ghi chú triển khai
-
-* Flask phù hợp chạy 1 process (dev). Deploy production nên dùng Gunicorn/Uvicorn + reverse proxy (Nginx) và DB thật (Postgres).
-* Model/encoders/embeddings để trong `models/` để app tải nhanh.
