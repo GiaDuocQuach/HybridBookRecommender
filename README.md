@@ -28,14 +28,9 @@ source .venv/bin/activate
 ### Cài thư viện
 
 ```bash
-pip install --upgrade pip
-pip install numpy pandas scikit-learn lightgbm matplotlib seaborn \
-            flask sentence-transformers joblib beautifulsoup4 unidecode pyvi tqdm
-# (nếu sentence-transformers kéo torch mà lỗi, có thể cài CPU-only)
-# pip install torch --index-url https://download.pytorch.org/whl/cpu
+python.exe -m pip install --upgrade pip
+pip install -r requirements.txt
 ```
-
-> Lần đầu dùng `sentence-transformers` sẽ tải model; có GPU thì đặt `EMBED_DEVICE=cuda`.
 
 ---
 
@@ -57,8 +52,6 @@ project_root/
 └─ README.md
 ```
 
-> Nếu bạn đang để file FE ở gốc, hãy chuyển vào `web/templates` và `web/static` cho đúng đường dẫn Flask trong `app.py` (hoặc sửa tham số `template_folder`, `static_folder` cho khớp).
-
 ---
 
 ## 3) Thiết lập biến môi trường (khuyến nghị)
@@ -77,8 +70,6 @@ GAMMA_USER=0.10
 DELTA_QUERY=0.12
 EPS_LEX=0.08
 ```
-
-> Bạn cũng có thể set trực tiếp trong shell: `export EMBED_DEVICE=cuda` (Linux/macOS) hoặc `$env:EMBED_DEVICE='cuda'` (PowerShell).
 
 ---
 
