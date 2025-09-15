@@ -1,48 +1,169 @@
-# BookRec — cấu trúc lại (giữ logic, bổ sung đánh giá)
-## Local
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
-pip install -r requirements.txt
-python scripts/eda_runner.py
-python scripts/train_ranker.py
-python scripts/eval_ranking.py
-export PYTHONPATH=./src
-export FLASK_APP=src/bookrec/api/app.py
-export SECRET_KEY=change_me
-flask run -h 127.0.0.1 -p 8080
-## Docker
-docker build -t bookrec:latest .
-docker run --rm -it -p 8080:8080 -e FLASK_APP=src/bookrec/api/app.py -e PYTHONPATH=/app/src -e SECRET_KEY=change_me -v $(pwd)/models:/app/models -v $(pwd)/data:/app/data -v $(pwd)/reports:/app/reports bookrec:latest
-## Eval (offline)
-python scripts/eval_ranking.py  # -> reports/ranking_metrics_by_category.csv
-## Test
-PYTHONPATH=./src pytest -q
+# README — Hướng dẫn chạy (Runbook)
 
-## Hướng dẫn chạy trên Windows (PowerShell)
+Dự án gợi ý sách kết hợp **semantic search + lexical + LightGBM reranker**, giao diện Flask.
 
-> Mở PowerShell tại thư mục **gốc** của dự án (nơi có `requirements.txt`, `src`, `scripts`, `web`)
+---
+
+## 0) Chuẩn bị môi trường
+
+* **Python**: 3.10+
+* Khuyên dùng **virtualenv** (venv).
+
+### Tạo venv
+
+**Windows (PowerShell)**
 
 ```powershell
-# 1) Tạo venv & cài dependencies
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-
-# 2) Cho Python nhìn thấy 'src'
-$env:PYTHONPATH = (Resolve-Path .\src).Path
-
-# 3) EDA + chuẩn bị dữ liệu (gọi đúng các hàm trong eda.py của bạn)
-python .\scripts\eda_runner.py
-
-# 4) Huấn luyện LightGBM + xuất biểu đồ phân tích
-python .\scripts	rain_ranker.py
-
-# 5) (Tuỳ chọn) Đánh giá ranking offline theo category
-python .\scripts\eval_ranking.py
-
-# 6) Chạy Flask app
-python -m flask --app src/bookrec/api/app.py run -h 127.0.0.1 -p 8080
+py -3.10 -m venv .venv
+.venv\Scripts\Activate.ps1
 ```
+
+**macOS/Linux**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### Cài thư viện
+
+```bash
+pip install --upgrade pip
+pip install numpy pandas scikit-learn lightgbm matplotlib seaborn \
+            flask sentence-transformers joblib beautifulsoup4 unidecode pyvi tqdm
+# (nếu sentence-transformers kéo torch mà lỗi, có thể cài CPU-only)
+# pip install torch --index-url https://download.pytorch.org/whl/cpu
+```
+
+> Lần đầu dùng `sentence-transformers` sẽ tải model; có GPU thì đặt `EMBED_DEVICE=cuda`.
+
+---
+
+## 1) Cấu trúc thư mục tối thiểu
+
+```
+project_root/
+├─ data/
+│  └─ books_data_clean.csv              # dữ liệu sạch
+├─ models/                              # sẽ sinh trong quá trình chạy
+├─ web/
+│  ├─ templates/                        # index.html, login.html, (detail.html nếu có)
+│  └─ static/                           # style.css, app.js
+├─ app.py
+├─ eda.py, eda_runner.py
+├─ train_model.py, train_ranker.py
+├─ eval_ranking.py
+├─ embedding.py, ranker.py, metrics.py
+└─ README.md
+```
+
+> Nếu bạn đang để file FE ở gốc, hãy chuyển vào `web/templates` và `web/static` cho đúng đường dẫn Flask trong `app.py` (hoặc sửa tham số `template_folder`, `static_folder` cho khớp).
+
+---
+
+## 2) Thiết lập biến môi trường (tuỳ chọn nhưng khuyến nghị)
+
+Tạo file `.env` (hoặc export biến trước khi chạy):
+
+```
+SECRET_KEY=replace_with_a_secret_key_production
+INTERACTIONS_DB=interactions.db
+SENTENCE_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+EMBED_DEVICE=cpu
+# Trọng số trộn điểm
+ALPHA_LGB=0.55
+BETA_SESS=0.20
+GAMMA_USER=0.10
+DELTA_QUERY=0.12
+EPS_LEX=0.08
+```
+
+> Bạn cũng có thể set trực tiếp trong shell: `export EMBED_DEVICE=cuda` (Linux/macOS) hoặc `$env:EMBED_DEVICE='cuda'` (PowerShell).
+
+---
+
+## 3) Chuẩn bị dữ liệu
+
+Nếu **đã có** `data/books_data_clean.csv` thì bỏ qua bước này.
+
+Nếu **chưa có**:
+
+* Dùng `clean_data.py` để hợp nhất/chuẩn hoá từ nguồn Tiki & Fahasa (cần dữ liệu raw).
+* Hoặc dùng file mẫu bạn có sẵn.
+
+---
+
+## 4) Tiền xử lý & chia tập (EDA + split)
+
+```bash
+python eda_runner.py
+```
+
+Sinh các file:
+
+* `models/le_cat.pkl`, `models/le_pop.pkl`
+* `data/X_train.npy`, `data/y_train.npy`, `data/X_val.npy`, `data/y_val.npy`, ...
+* `reports/figures/*` (biểu đồ EDA)
+
+---
+
+## 5) Train ranker (LightGBM) + chọn threshold tối ưu
+
+```bash
+python train_ranker.py
+```
+
+Kết quả:
+
+* `models/book_ranker.pkl`
+* `models/optimal_threshold.txt`
+* Biểu đồ: feature importance, PR-curve, confusion matrix (trong `reports/figures/` nếu script có vẽ).
+
+---
+
+## 6) (Tuỳ chọn) Đánh giá xếp hạng
+
+```bash
+python eval_ranking.py
+```
+
+Sinh `reports/ranking_metrics_by_category.csv` với NDCG/Recall/HitRate/MRR theo từng thể loại.
+
+> Lưu ý nhất quán đặc trưng: `price_log` nên là `log1p(price_k)` ở mọi nơi (train/eval/app).
+
+---
+
+## 7) Chạy web app
+
+```bash
+python app.py
+```
+
+* Mặc định chạy tại **[http://127.0.0.1:8080](http://127.0.0.1:8080)**.
+* Lần đầu có thể mất thời gian để **tính embeddings** và lưu vào `models/book_embeddings.npy`.
+* Đăng nhập (username tuỳ ý) → vào trang tìm kiếm → gõ từ khoá/chọn bộ lọc → nhận **TOP‑9** gợi ý.
+
+**Các endpoint chính** (tham khảo):
+
+* `POST /recommend` – trả về danh sách sách đã rerank.
+* `POST /click`     – ghi lại click vào SQLite.
+* `GET  /book/<id>` – trang chi tiết (có nút Mua sách).
+* `GET|POST /login`, `GET /logout`.
+
+---
+
+## 8) Troubleshooting nhanh
+
+* **`ModuleNotFoundError: torch`** khi cài `sentence-transformers`:
+  `pip install torch --index-url https://download.pytorch.org/whl/cpu`
+  (hoặc dùng bản phù hợp GPU nếu có CUDA).
+* **Port 8080 đang bận**: chỉnh `app.run(..., port=5000)` trong `app.py`.
+* **Không thấy CSS/JS**: kiểm tra đúng thư mục `web/static` và `web/templates` hoặc chỉnh `template_folder`, `static_folder` trong `Flask(...)`.
+* **Lỗi SQLite khi ghi**: chắc chắn đường dẫn `INTERACTIONS_DB` *ghi được* (ví dụ đặt ngay cạnh `app.py`).
+
+---
+
+## 9) Ghi chú triển khai
+
+* Flask phù hợp chạy 1 process (dev). Deploy production nên dùng Gunicorn/Uvicorn + reverse proxy (Nginx) và DB thật (Postgres).
+* Model/encoders/embeddings để trong `models/` để app tải nhanh.
