@@ -1,6 +1,4 @@
-# README — Hướng dẫn chạy (Runbook)
-
-Dự án gợi ý sách kết hợp **semantic search + lexical + LightGBM reranker**, giao diện Flask.
+Hybrid Recommender Book.
 
 ---
 
@@ -79,8 +77,7 @@ Nếu **đã có** `data/books_data_clean.csv` thì bỏ qua bước này.
 
 Nếu **chưa có**:
 
-* Dùng `clean_data.py` để hợp nhất/chuẩn hoá từ nguồn Tiki & Fahasa (cần dữ liệu raw).
-* Hoặc dùng file mẫu bạn có sẵn.
+* Chạy file `clean_data.py` để hợp nhất/chuẩn hoá từ nguồn Tiki & Fahasa (cần dữ liệu raw).
 
 ---
 
