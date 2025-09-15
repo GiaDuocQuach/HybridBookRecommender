@@ -147,5 +147,5 @@ python app.py
 
 * `POST /recommend` – trả về danh sách sách đã rerank.
 * `POST /click`     – ghi lại click vào SQLite.
-* `GET  /book/<id>` – trang chi tiết (có nút Mua sách).
+* `GET  /book/<id>` – trang chi tiết.
 * `GET|POST /login`, `GET /logout`.
