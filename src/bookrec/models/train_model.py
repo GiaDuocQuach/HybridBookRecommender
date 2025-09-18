@@ -92,7 +92,7 @@ def train_and_evaluate():
         y_train,
         eval_set=[(X_val, y_val)],
         eval_metric="auc",
-        callbacks=[lgb.log_evaluation(period=0)],  # không đổi logic, chỉ tắt log
+        callbacks=[lgb.log_evaluation(period=0)],
     )
 
     joblib.dump(clf, "models/book_ranker.pkl")
